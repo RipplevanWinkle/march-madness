@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>March Madness 2026 — Monte Carlo Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Oswald:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0d12;--s:#111620;--s2:#161c28;--br:#1e2a3a;--br2:#243045;--or:#ff6b1a;--or2:#ff8c42;--bl:#4d8fff;--gd:#ffc93c;--gn:#22c55e;--rd:#ef4444;--tl:#06b6d4;--tx:#d4dde8;--mu:#3a4f6a;--mu2:#2a3a50}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:'Oswald',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(255,107,26,.06) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 80% 90%,rgba(77,143,255,.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+.hdr{position:relative;z-index:10;background:linear-gradient(135deg,#0d1117,#111827,#0d1117);border-bottom:2px solid var(--or)}
+.hi{max-width:1600px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hl{display:flex;align-items:center;gap:14px}
+.ball{width:46px;height:46px;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 35% 30%,var(--or2),var(--or),#cc4400);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(255,107,26,.4)}
+.tm{font-family:'Alfa Slab One',serif;font-size:24px;color:#fff;letter-spacing:1px;line-height:1}
+.tm span{color:var(--or)}
+.ts{font-family:'Source Code Pro',monospace;font-size:9px;color:var(--mu);letter-spacing:3px;margin-top:3px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-family:'Source Code Pro',monospace;font-size:9px;letter-spacing:2px;padding:3px 10px;border-radius:2px;border:1px solid}
+.po{border-color:var(--or);color:var(--or)}
+.pb{border-color:var(--bl);color:var(--bl)}
+.pg{border-color:var(--gd);color:var(--gd)}
+.ctrl{max-width:1600px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;z-index:10}
+.btn{font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:2px;padding:9px 20px;border:none;cursor:pointer;transition:all .2s;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+.bp{background:var(--or);color:#000}.bp:hover{background:var(--or2);box-shadow:0 0 20px rgba(255,107,26,.4)}.bp:disabled{opacity:.4;cursor:not-allowed}
+.bs{background:transparent;color:var(--tl);border:1px solid var(--tl);clip-path:none;padding:8px 16px}.bs:hover{background:rgba(6,182,212,.1)}
+.st{font-family:'Source Code Pro',monospace;font-size:10px;color:var(--mu);padding:6px 14px;border:1px solid var(--br2);background:var(--s);flex:1;min-width:200px}
+.st.ok{color:var(--gn);border-color:rgba(34,197,94,.3)}.st.err{color:var(--rd)}.st.ld{color:var(--gd);border-color:rgba(255,201,60,.3)}
+.flt{max-width:1600px;margin:0 auto;padding:0 24px 12px;display:flex;gap:6px;flex-wrap:wrap;position:relative;z-index:10}
+.ft{font-family:'Oswald',sans-serif;font-weight:500;font-size:11px;letter-spacing:2px;padding:5px 14px;border:1px solid var(--br2);color:var(--mu);background:var(--s);cursor:pointer;transition:all .2s}
+.ft.on{border-color:var(--or);color:var(--or);background:rgba(255,107,26,.08)}.ft:hover:not(.on){color:var(--tx)}
+.sum{max-width:1600px;margin:0 auto;padding:0 24px 12px;display:none;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;position:relative;z-index:10}
+.sb{background:var(--s);border:1px solid var(--br);border-top:2px solid var(--or);padding:10px;text-align:center}
+.sv{font-family:'Alfa Slab One',serif;font-size:22px;color:var(--or);margin-bottom:2px}
+.sl{font-family:'Source Code Pro',monospace;font-size:8px;color:var(--mu);letter-spacing:2px}
+.leg{max-width:1600px;margin:0 auto;padding:0 24px 10px;display:none;gap:14px;align-items:center;flex-wrap:wrap;position:relative;z-index:10}
+.li{display:flex;align-items:center;gap:5px;font-family:'Source Code Pro',monospace;font-size:9px;color:var(--mu)}
+.ld{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.main{max-width:1600px;margin:0 auto;padding:0 24px 40px;position:relative;z-index:10}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:10px}
+.card{background:var(--s);border:1px solid var(--br);border-left:3px solid var(--mu2);overflow:hidden}
+.card.eb{border-left-color:var(--or)}.card.em{border-left-color:var(--gd)}.card.el{border-left-color:var(--br2)}.card.ed{border-left-color:var(--gn)}
+.ch{padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--br);background:var(--s2)}
+.cr{font-family:'Source Code Pro',monospace;font-size:8px;letter-spacing:2px;color:var(--mu)}
+.ct{font-family:'Source Code Pro',monospace;font-size:8px;color:var(--mu)}
+.cb{padding:12px}
+.teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:10px}
+.team{text-align:center}
+.ts2{font-family:'Source Code Pro',monospace;font-size:8px;color:var(--mu);margin-bottom:2px;letter-spacing:1px}
+.tn{font-family:'Oswald',sans-serif;font-weight:700;font-size:16px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tn.w{color:var(--or)}.tn.l{color:var(--mu)}
+.tr{font-family:'Source Code Pro',monospace;font-size:7px;color:var(--mu);margin-top:1px}
+.vs{font-family:'Alfa Slab One',serif;font-size:10px;color:var(--mu2);text-align:center}
+.wb{height:5px;display:flex;overflow:hidden;border-radius:3px;margin-bottom:6px}
+.wba{background:var(--bl);transition:width .8s ease}.wbh{background:var(--or);flex:1}
+.wp{display:flex;justify-content:space-between;font-family:'Source Code Pro',monospace;font-size:8px;color:var(--mu);margin-bottom:8px}
+.sims{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px}
+.sbox{background:var(--s2);border:1px solid var(--br);padding:7px;text-align:center}
+.sv2{font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;margin-bottom:1px}
+.sl2{font-family:'Source Code Pro',monospace;font-size:7px;color:var(--mu);letter-spacing:1px}
+.avg{background:var(--s2);border:1px solid var(--br);padding:6px 10px;display:flex;gap:10px;margin-bottom:8px;align-items:center}
+.avg-l{font-family:'Source Code Pro',monospace;font-size:7px;color:var(--mu);letter-spacing:1px}
+.avg-v{font-family:'Oswald',sans-serif;font-size:13px;color:var(--tl)}
+.comp{border-top:1px solid var(--br);padding-top:8px;margin-top:2px}
+.crow{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.cl{font-family:'Source Code Pro',monospace;font-size:7px;color:var(--mu);width:65px;flex-shrink:0;letter-spacing:1px}
+.cv{font-family:'Oswald',sans-serif;font-weight:600;color:var(--gd);min-width:100px}
+.cm{font-family:'Oswald',sans-serif;font-weight:600;color:var(--tl);min-width:100px}
+.cd{font-family:'Source Code Pro',monospace;font-size:9px;font-weight:600;flex:1}
+.cd.big{color:var(--or)}.cd.mod{color:var(--gd)}.cd.low{color:var(--mu)}
+.inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px;border-top:1px solid var(--br);padding-top:8px}
+.ilbl{font-family:'Source Code Pro',monospace;font-size:7px;color:var(--mu);letter-spacing:1px;margin-bottom:2px;display:block}
+.ifield{width:100%;background:var(--bg);border:1px solid var(--br2);color:var(--gd);font-family:'Source Code Pro',monospace;font-size:12px;padding:5px 7px;outline:none;transition:border-color .2s}
+.ifield:focus{border-color:var(--gd)}.ifield::placeholder{color:var(--mu2)}
+.empty{text-align:center;padding:60px 20px;color:var(--mu)}
+.ei{font-size:44px;margin-bottom:12px}.et{font-family:'Alfa Slab One',serif;font-size:18px;color:var(--tx);margin-bottom:6px}.es{font-family:'Source Code Pro',monospace;font-size:10px;letter-spacing:2px}
+#mcOv{position:fixed;inset:0;background:rgba(10,13,18,.95);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;backdrop-filter:blur(8px)}
+.mct{font-family:'Alfa Slab One',serif;font-size:44px;color:var(--or);letter-spacing:4px}
+.mcg{font-family:'Source Code Pro',monospace;font-size:11px;color:var(--tl);letter-spacing:3px}
+.mcbw{width:480px;height:4px;background:var(--br);overflow:hidden;border-radius:2px}
+.mcbf{height:100%;width:0%;background:linear-gradient(90deg,var(--or),var(--gd));transition:width .08s}
+.mcn{font-family:'Oswald',sans-serif;font-weight:700;font-size:34px;color:var(--gd)}
+.mcnl{font-family:'Source Code Pro',monospace;font-size:9px;color:var(--mu);letter-spacing:3px}
+.rth{padding:8px 10px;font-family:"Source Code Pro",monospace;font-size:8px;letter-spacing:1px;white-space:nowrap}.rtd{padding:8px 10px;font-family:"Oswald",sans-serif;font-weight:500;white-space:nowrap}.sstat{background:var(--s);border:1px solid var(--br);border-top:2px solid var(--or);padding:10px;text-align:center}.sstat-v{font-family:"Alfa Slab One",serif;font-size:18px;color:var(--or);margin-bottom:2px}.sstat-l{font-family:"Source Code Pro",monospace;font-size:7px;color:var(--mu);letter-spacing:2px}
+.rth{padding:8px 10px;font-family:"Source Code Pro",monospace;font-size:8px;letter-spacing:1px;white-space:nowrap}
+.rtd{padding:8px 10px;font-family:"Oswald",sans-serif;font-weight:500;white-space:nowrap}
+.sstat{background:var(--s);border:1px solid var(--br);border-top:2px solid var(--or);padding:10px;text-align:center}
+.sstat-v{font-family:"Alfa Slab One",serif;font-size:18px;color:var(--or);margin-bottom:2px}
+.sstat-l{font-family:"Source Code Pro",monospace;font-size:7px;color:var(--mu);letter-spacing:2px}
+.badge{border-radius:2px;font-family:"Source Code Pro",monospace;letter-spacing:1px}
+.rth{padding:8px 10px;font-family:"Source Code Pro",monospace;font-size:8px;letter-spacing:1px;white-space:nowrap}
+.rtd{padding:8px 10px;font-family:"Oswald",sans-serif;font-weight:500;white-space:nowrap}
+.sstat{background:var(--s);border:1px solid var(--br);border-top:2px solid var(--or);padding:10px;text-align:center}
+.sstat-v{font-family:"Alfa Slab One",serif;font-size:18px;color:var(--or);margin-bottom:2px}
+.sstat-l{font-family:"Source Code Pro",monospace;font-size:7px;color:var(--mu);letter-spacing:2px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.hi{padding:12px 16px}.tm{font-size:19px}}
+</style>
+</head>
+<body>
+<div id="mcOv">
+  <div class="mct">MONTE CARLO</div>
+  <div class="mcg" id="mcG">PREPARING...</div>
+  <div class="mcbw"><div class="mcbf" id="mcB"></div></div>
+  <div><div class="mcn" id="mcN">0</div><div class="mcnl">SIMULATIONS COMPLETE</div></div>
+</div>
+<header class="hdr">
+  <div class="hi">
+    <div class="hl">
+      <div class="ball">🏀</div>
+      <div>
+        <div class="tm">MARCH <span>MADNESS</span> 2026</div>
+        <div class="ts">MONTE CARLO · 10,000 SIMS · KENPOM-CALIBRATED · MODEL vs VEGAS · ALL 32 GAMES</div>
+      </div>
+    </div>
+    <div class="pills">
+      <div class="pill po" id="pG">32 GAMES</div>
+      <div class="pill pb">FIRST ROUND</div>
+      <div class="pill pg">KENPOM + VEGAS LOADED</div>
+    </div>
+  </div>
+</header>
+<div class="ctrl">
+  <button class="btn bp" id="runBtn" onclick="runAllSims()">🏀 RUN SIMS — ALL CURRENT GAMES</button>
+  <button class="btn bs" onclick="runAllSims()">↻ RE-RUN</button>
+  <div class="st" id="scoreSt" style="color:var(--mu)">📡 Loading games from ESPN...</div>
+  <div class="st" id="st">All 32 games loaded with KenPom-calibrated power ratings + Vegas lines — click RUN SIMS</div>
+</div>
+<div class="flt" id="filters">
+  <button class="ft on" onclick="filt('ALL',this)">ALL (32)</button>
+  <button class="ft" onclick="filt('EAST',this)">EAST</button>
+  <button class="ft" onclick="filt('WEST',this)">WEST</button>
+  <button class="ft" onclick="filt('MIDWEST',this)">MIDWEST</button>
+  <button class="ft" onclick="filt('SOUTH',this)">SOUTH</button>
+  <button class="ft" onclick="filt('FIRST FOUR',this)">🎲 FIRST FOUR</button>
+  <button class="ft" onclick="filt('BIG EDGE',this)">🔥 BIG EDGES</button>
+  <button class="ft" onclick="filt('RESULTS',this)">📊 RESULTS & ACCURACY</button>
+  <button class="ft" onclick="filt('UPSETS',this)">⚡ MODEL UPSETS</button>
+</div>
+<div class="sum" id="sum"></div>
+<div class="leg" id="leg">
+  <span style="font-family:'Source Code Pro',monospace;font-size:9px;color:var(--mu)">LEFT BORDER:</span>
+  <div class="li"><div class="ld" style="background:var(--or)"></div>Big edge vs Vegas (≥4 pts)</div>
+  <div class="li"><div class="ld" style="background:var(--gd)"></div>Moderate edge (2–3 pts)</div>
+  <div class="li"><div class="ld" style="background:var(--br2)"></div>Model agrees with Vegas</div>
+</div>
+<div class="main"><div id="gc">
+  <div class="empty"><div class="ei">🏀</div><div class="et">2026 NCAA Tournament</div><div class="es">ALL 32 FIRST ROUND GAMES + VEGAS LINES LOADED · CLICK RUN SIMS</div></div>
+</div></div>
+<script>const SIMS = 10000;
+const ODDS_KEY = '9fe39e82cd86f09054575edb94a1579a';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ── SAVE/LOAD ────────────────────────────────────────────────────────
+const SK = 'mm2026_final';
+let STATE = { sims:{}, vegas:{}, scores:{} };
+function save(){ try{ localStorage.setItem(SK,JSON.stringify(STATE)); }catch(e){} }
+function load(){ try{ const s=localStorage.getItem(SK); if(s) STATE={...STATE,...JSON.parse(s)}; }catch(e){} }
+
+// ── BARTTORVIK DATA ──────────────────────────────────────────────────
+const ADJEM={
+  // 100% real BartTorvik data
+  'Akron':11.82,
+  'Alabama':26.71,
+  'Arizona':35.54,
+  'Arkansas':26.28,
+  'BYU':20.42,
+  'Cal Baptist':7.18,
+  'Clemson':19.57,
+  'Duke':37.34,
+  'Florida':33.83,
+  'Furman':-2.10,
+  'Georgia':19.57,
+  'Gonzaga':26.27,
+  'Hawaii':5.04,
+  'High Point':8.18,
+  'Hofstra':8.25,
+  'Houston':32.96,
+  'Idaho':2.65,
+  'Illinois':33.74,
+  'Iowa':21.93,
+  'Iowa State':31.14,
+  'Kansas':23.47,
+  'Kennesaw State':1.30,
+  'Kentucky':19.93,
+  'LIU':-6.12,
+  'Lehigh':-10.20,
+  'Louisville':25.86,
+  'McNeese':11.01,
+  'Miami FL':19.62,
+  'Michigan':36.60,
+  'Michigan State':26.73,
+  'Missouri':16.90,
+  'NC State':19.43,
+  'Nebraska':23.74,
+  'North Carolina':21.41,
+  'North Dakota State':5.41,
+  'Northern Iowa':11.17,
+  'Ohio State':23.62,
+  'Penn':1.16,
+  'Prairie View':-9.94,
+  'Purdue':33.05,
+  'Queens':-2.44,
+  'SMU':18.05,
+  'Saint Louis':17.30,
+  "Saint Mary's":21.81,
+  'Santa Clara':21.27,
+  'Siena':-1.70,
+  'South Florida':15.38,
+  "St. John's":25.71,
+  'TCU':15.20,
+  'Tennessee':25.97,
+  'Tennessee State':-4.10,
+  'Texas':17.65,
+  'Texas A&M':18.47,
+  'Texas Tech':27.50,
+  'Troy':1.67,
+  'UCLA':22.76,
+  'UConn':28.12,
+  'UMBC':-1.66,
+  'Utah State':20.94,
+  'VCU':16.22,
+  'Vanderbilt':28.11,
+  'Villanova':19.07,
+  'Virginia':26.42,
+  'Wisconsin':25.54,
+  'Wright State':3.36,'Howard':-2.77,
+  'Miami OH':9.09,
+  'Prairie View A&M':-9.94,
+};
+const TEMPO={
+  // Real BartTorvik tempo (adjt)
+  'Akron':70.3,
+  'Alabama':73.1,
+  'Arizona':70.0,
+  'Arkansas':71.0,
+  'BYU':69.8,
+  'Cal Baptist':65.9,
+  'Clemson':64.3,
+  'Duke':65.8,
+  'Florida':70.4,
+  'Furman':65.8,
+  'Georgia':72.0,
+  'Gonzaga':68.9,
+  'Hawaii':69.6,
+  'High Point':69.9,
+  'Hofstra':64.7,
+  'Houston':63.3,
+  'Idaho':67.4,
+  'Illinois':65.7,
+  'Iowa':63.0,
+  'Iowa State':67.0,
+  'Kansas':67.6,
+  'Kennesaw State':71.3,
+  'Kentucky':68.3,
+  'LIU':67.8,
+  'Lehigh':66.9,
+  'Louisville':69.7,
+  'McNeese':66.1,
+  'Miami FL':67.9,
+  'Michigan':71.2,
+  'Michigan State':66.0,
+  'Missouri':66.4,
+  'NC State':69.1,
+  'Nebraska':66.8,
+  'North Carolina':68.0,
+  'North Dakota State':66.4,
+  'Northern Iowa':62.2,
+  'Ohio State':66.2,
+  'Penn':69.0,
+  'Prairie View':70.9,
+  'Purdue':64.4,
+  'Queens':69.5,
+  'SMU':68.6,
+  'Saint Louis':71.0,
+  "Saint Mary's":65.3,
+  'Santa Clara':69.3,
+  'Siena':64.6,
+  'South Florida':71.4,
+  "St. John's":69.6,
+  'TCU':67.6,
+  'Tennessee':65.2,
+  'Tennessee State':70.1,
+  'Texas':67.1,
+  'Texas A&M':71.0,
+  'Texas Tech':66.4,
+  'Troy':65.1,
+  'UCLA':64.7,
+  'UConn':64.6,
+  'UMBC':66.0,
+  'Utah State':67.6,
+  'VCU':68.7,
+  'Vanderbilt':69.0,
+  'Villanova':64.9,
+  'Virginia':65.6,
+  'Wisconsin':68.7,
+  'Wright State':67.0,'Howard':69.0,
+  'Miami OH':69.9,
+  'Prairie View A&M':70.9,
+};
+function pr(n){ return ADJEM[n]||0; }
+function tp(n){ return TEMPO[n]||68; }
+
+// ── GAMES ────────────────────────────────────────────────────────────
+// All 64 games — First Four results applied (Howard, NC State, SMU, Lehigh advance)
+// Convention: spread negative = t1 favored, positive = t2 favored
+// t1=away(left), t2=home(right)
+const GAMES = [
+  // ── FIRST FOUR (complete) ─────────────────────────────────────────
+  {id:'f1',region:'FIRST FOUR',round:'First Four',t1:{seed:16,name:'UMBC',bt:'UMBC'},        t2:{seed:16,name:'Howard',bt:'Howard'},     spread:-1.5,total:140.5,date:'Mar 17',time:'6:40 PM',venue:'Dayton, OH'},
+  {id:'f2',region:'FIRST FOUR',round:'First Four',t1:{seed:16,name:'Prairie View',bt:'Prairie View A&M'},t2:{seed:16,name:'Lehigh',bt:'Lehigh'},      spread:3.5, total:142.5,date:'Mar 17',time:'9:15 PM',venue:'Dayton, OH'},
+  {id:'f3',region:'FIRST FOUR',round:'First Four',t1:{seed:11,name:'Texas',bt:'Texas'},          t2:{seed:11,name:'NC State',bt:'NC State'},   spread:1.5, total:158.5,date:'Mar 18',time:'6:40 PM',venue:'Dayton, OH'},
+  {id:'f4',region:'FIRST FOUR',round:'First Four',t1:{seed:11,name:'Miami OH',bt:'Miami OH'},     t2:{seed:11,name:'SMU',bt:'SMU'},            spread:6.5, total:164.5,date:'Mar 18',time:'9:15 PM',venue:'Dayton, OH'},
+  // ── EAST ──────────────────────────────────────────────────────────
+  {id:'e1',region:'EAST',round:'First Round',t1:{seed:1, name:'Duke',bt:'Duke'},              t2:{seed:16,name:'Siena',bt:'Siena'},           spread:-27.5,total:136.5,date:'Mar 19',time:'2:50 PM',venue:'Greenville, SC'},
+  {id:'e2',region:'EAST',round:'First Round',t1:{seed:8, name:'Ohio State',bt:'Ohio State'},  t2:{seed:9, name:'TCU',bt:'TCU'},               spread:-2.5, total:146.5,date:'Mar 19',time:'12:15 PM',venue:'Greenville, SC'},
+  {id:'e3',region:'EAST',round:'First Round',t1:{seed:5, name:"St. John's",bt:"St. John's"},  t2:{seed:12,name:'Northern Iowa',bt:'Northern Iowa'},spread:-11.5,total:131.5,date:'Mar 20',time:'7:10 PM',venue:'Greenville, SC'},
+  {id:'e4',region:'EAST',round:'First Round',t1:{seed:4, name:'Kansas',bt:'Kansas'},          t2:{seed:13,name:'Cal Baptist',bt:'Cal Baptist'},spread:-13.5,total:138.5,date:'Mar 20',time:'9:45 PM',venue:'Greenville, SC'},
+  {id:'e5',region:'EAST',round:'First Round',t1:{seed:6, name:'Louisville',bt:'Louisville'},  t2:{seed:11,name:'South Florida',bt:'South Florida'},spread:-5.5,total:143.0,date:'Mar 19',time:'1:30 PM',venue:'Greenville, SC'},
+  {id:'e6',region:'EAST',round:'First Round',t1:{seed:3, name:'Michigan State',bt:'Michigan State'},t2:{seed:14,name:'North Dakota State',bt:'North Dakota State'},spread:-16.5,total:143.5,date:'Mar 19',time:'4:05 PM',venue:'Buffalo, NY'},
+  {id:'e7',region:'EAST',round:'First Round',t1:{seed:7, name:'UCLA',bt:'UCLA'},              t2:{seed:10,name:'UCF',bt:'UCF'},               spread:-5.5, total:153.5,date:'Mar 20',time:'6:50 PM',venue:'Buffalo, NY'},
+  {id:'e8',region:'EAST',round:'First Round',t1:{seed:2, name:'UConn',bt:'UConn'},            t2:{seed:15,name:'Furman',bt:'Furman'},         spread:-20.5,total:137.5,date:'Mar 20',time:'2:45 PM',venue:'Buffalo, NY'},
+  // ── WEST ──────────────────────────────────────────────────────────
+  {id:'w1',region:'WEST',round:'First Round',t1:{seed:1, name:'Arizona',bt:'Arizona'},        t2:{seed:16,name:'LIU',bt:'LIU'},               spread:-31.5,total:151.5,date:'Mar 20',time:'5:15 PM',venue:'San Diego, CA'},
+  {id:'w2',region:'WEST',round:'First Round',t1:{seed:8, name:'Villanova',bt:'Villanova'},    t2:{seed:9, name:'Utah State',bt:'Utah State'},  spread:1.5,  total:148.5,date:'Mar 20',time:'7:10 PM',venue:'San Diego, CA'},
+  {id:'w3',region:'WEST',round:'First Round',t1:{seed:5, name:'Wisconsin',bt:'Wisconsin'},    t2:{seed:12,name:'High Point',bt:'High Point'},  spread:-11.5,total:165.5,date:'Mar 20',time:'4:30 PM',venue:'San Diego, CA'},
+  {id:'w4',region:'WEST',round:'First Round',t1:{seed:4, name:'Arkansas',bt:'Arkansas'},      t2:{seed:13,name:"Hawai'i",bt:'Hawaii'},         spread:-15.5,total:159.5,date:'Mar 20',time:'4:25 PM',venue:'San Diego, CA'},
+  {id:'w5',region:'WEST',round:'First Round',t1:{seed:6, name:'BYU',bt:'BYU'},                t2:{seed:11,name:'Texas',bt:'Texas'},            spread:-1.5, total:159.5,date:'Mar 19',time:'4:25 PM',venue:'Portland, OR'},
+  {id:'w6',region:'WEST',round:'First Round',t1:{seed:3, name:'Gonzaga',bt:'Gonzaga'},        t2:{seed:14,name:'Kennesaw State',bt:'Kennesaw State'},spread:-20.5,total:154.5,date:'Mar 20',time:'10:00 PM',venue:'San Diego, CA'},
+  {id:'w7',region:'WEST',round:'First Round',t1:{seed:7, name:'Miami FL',bt:'Miami FL'},      t2:{seed:10,name:'Missouri',bt:'Missouri'},      spread:-1.5, total:148.5,date:'Mar 19',time:'7:10 PM',venue:'San Diego, CA'},
+  {id:'w8',region:'WEST',round:'First Round',t1:{seed:2, name:'Purdue',bt:'Purdue'},          t2:{seed:15,name:'Queens',bt:'Queens'},          spread:-23.5,total:163.5,date:'Mar 20',time:'12:15 PM',venue:'San Diego, CA'},
+  // ── MIDWEST ───────────────────────────────────────────────────────
+  {id:'m1',region:'MIDWEST',round:'First Round',t1:{seed:1, name:'Michigan',bt:'Michigan'},   t2:{seed:16,name:'Howard',bt:'Howard'},          spread:-27.5,total:141.5,date:'Mar 19',time:'3:00 PM',venue:'St. Louis, MO'},
+  {id:'m2',region:'MIDWEST',round:'First Round',t1:{seed:8, name:'Georgia',bt:'Georgia'},     t2:{seed:9, name:'Saint Louis',bt:'Saint Louis'},spread:-1.5, total:170.5,date:'Mar 19',time:'12:40 PM',venue:'St. Louis, MO'},
+  {id:'m3',region:'MIDWEST',round:'First Round',t1:{seed:5, name:'Texas Tech',bt:'Texas Tech'},t2:{seed:12,name:'Akron',bt:'Akron'},           spread:-8.5, total:157.5,date:'Mar 19',time:'12:40 PM',venue:'St. Louis, MO'},
+  {id:'m4',region:'MIDWEST',round:'First Round',t1:{seed:4, name:'Alabama',bt:'Alabama'},     t2:{seed:13,name:'Hofstra',bt:'Hofstra'},        spread:-12.5,total:161.5,date:'Mar 19',time:'6:50 PM',venue:'St. Louis, MO'},
+  {id:'m5',region:'MIDWEST',round:'First Round',t1:{seed:6, name:'Tennessee',bt:'Tennessee'}, t2:{seed:11,name:'Miami OH',bt:'Miami OH'},     spread:-5.5, total:148.5,date:'Mar 20',time:'9:30 PM',venue:'Philadelphia, PA'},
+  {id:'m6',region:'MIDWEST',round:'First Round',t1:{seed:3, name:'Virginia',bt:'Virginia'},   t2:{seed:14,name:'Wright State',bt:'Wright State'},spread:-17.5,total:140.5,date:'Mar 19',time:'9:20 PM',venue:'St. Louis, MO'},
+  {id:'m7',region:'MIDWEST',round:'First Round',t1:{seed:7, name:'Kentucky',bt:'Kentucky'},   t2:{seed:10,name:'Santa Clara',bt:'Santa Clara'},spread:-3.5, total:161.5,date:'Mar 20',time:'12:15 PM',venue:'St. Louis, MO'},
+  {id:'m8',region:'MIDWEST',round:'First Round',t1:{seed:2, name:'Iowa State',bt:'Iowa State'},t2:{seed:15,name:'Tennessee State',bt:'Tennessee State'},spread:-24.5,total:149.5,date:'Mar 20',time:'3:00 PM',venue:'St. Louis, MO'},
+  // ── SOUTH ─────────────────────────────────────────────────────────
+  {id:'s1',region:'SOUTH',round:'First Round',t1:{seed:1, name:'Florida',bt:'Florida'},       t2:{seed:16,name:'Prairie View A&M',bt:'Prairie View A&M'},spread:-27.5,total:146.5,date:'Mar 20',time:'9:25 PM',venue:'Tampa, FL'},
+  {id:'s2',region:'SOUTH',round:'First Round',t1:{seed:8, name:'Clemson',bt:'Clemson'},       t2:{seed:9, name:'Iowa',bt:'Iowa'},              spread:2.5,  total:141.5,date:'Mar 19',time:'7:25 PM',venue:'Oklahoma City, OK'},
+  {id:'s3',region:'SOUTH',round:'First Round',t1:{seed:5, name:'Vanderbilt',bt:'Vanderbilt'}, t2:{seed:12,name:'McNeese',bt:'McNeese'},        spread:-11.5,total:150.5,date:'Mar 20',time:'2:50 PM',venue:'Oklahoma City, OK'},
+  {id:'s4',region:'SOUTH',round:'First Round',t1:{seed:4, name:'Nebraska',bt:'Nebraska'},     t2:{seed:13,name:'Troy',bt:'Troy'},              spread:-12.5,total:136.5,date:'Mar 20',time:'5:30 PM',venue:'Oklahoma City, OK'},
+  {id:'s5',region:'SOUTH',round:'First Round',t1:{seed:6, name:'North Carolina',bt:'North Carolina'},t2:{seed:11,name:'VCU',bt:'VCU'},         spread:-2.5, total:154.5,date:'Mar 19',time:'6:45 PM',venue:'Oklahoma City, OK'},
+  {id:'s6',region:'SOUTH',round:'First Round',t1:{seed:3, name:'Illinois',bt:'Illinois'},     t2:{seed:14,name:'Penn',bt:'Penn'},              spread:-24.5,total:150.5,date:'Mar 19',time:'4:30 PM',venue:'Philadelphia, PA'},
+  {id:'s7',region:'SOUTH',round:'First Round',t1:{seed:7, name:"Saint Mary's",bt:"Saint Mary's"},t2:{seed:10,name:'Texas A&M',bt:'Texas A&M'},spread:-3.5, total:147.5,date:'Mar 19',time:'3:20 PM',venue:'Oklahoma City, OK'},
+  {id:'s8',region:'SOUTH',round:'First Round',t1:{seed:2, name:'Houston',bt:'Houston'},       t2:{seed:15,name:'Idaho',bt:'Idaho'},            spread:-23.5,total:136.5,date:'Mar 20',time:'10:10 PM',venue:'Oklahoma City, OK'},
+];
+
+// ESPN game IDs for completed/live games — maps our game id to ESPN event id
+// Used to fetch scores. Update as games complete.
+const ESPN_IDS = {
+  'f1':'401638234','f2':'401638235','f3':'401638236','f4':'401638237',
+};
+
+// ── DK NAME MAP ──────────────────────────────────────────────────────
+// Maps DraftKings full team names to our bt (BartTorvik) names
+const DK = {
+  'Duke Blue Devils':'Duke','Michigan Wolverines':'Michigan','Arizona Wildcats':'Arizona',
+  'Florida Gators':'Florida','Houston Cougars':'Houston','Illinois Fighting Illini':'Illinois',
+  'Iowa State Cyclones':'Iowa State','Purdue Boilermakers':'Purdue',
+  'Connecticut Huskies':'UConn','Vanderbilt Commodores':'Vanderbilt',
+  'Gonzaga Bulldogs':'Gonzaga','Texas Tech Red Raiders':'Texas Tech',
+  'Michigan State Spartans':'Michigan State','Virginia Cavaliers':'Virginia',
+  "St. John's Red Storm":"St. John's",'Tennessee Volunteers':'Tennessee',
+  'Louisville Cardinals':'Louisville','Alabama Crimson Tide':'Alabama',
+  'Arkansas Razorbacks':'Arkansas','Nebraska Cornhuskers':'Nebraska',
+  'Wisconsin Badgers':'Wisconsin','Kansas Jayhawks':'Kansas',
+  'Ohio State Buckeyes':'Ohio State','UCLA Bruins':'UCLA',
+  "Saint Mary's Gaels":"Saint Mary's",'Iowa Hawkeyes':'Iowa',
+  'North Carolina Tar Heels':'North Carolina','Utah State Aggies':'Utah State',
+  'Santa Clara Broncos':'Santa Clara','Clemson Tigers':'Clemson',
+  'Kentucky Wildcats':'Kentucky','BYU Cougars':'BYU',
+  'Georgia Bulldogs':'Georgia','NC State Wolfpack':'NC State',
+  'Texas A&M Aggies':'Texas A&M','Miami Hurricanes':'Miami FL',
+  'Villanova Wildcats':'Villanova','Saint Louis Billikens':'Saint Louis',
+  'SMU Mustangs':'SMU','Missouri Tigers':'Missouri','TCU Horned Frogs':'TCU',
+  'VCU Rams':'VCU','South Florida Bulls':'South Florida',
+  'Northern Iowa Panthers':'Northern Iowa','High Point Panthers':'High Point',
+  'Akron Zips':'Akron','McNeese Cowboys':'McNeese','Cal Baptist Lancers':'Cal Baptist',
+  'North Dakota State Bison':'North Dakota State','Kennesaw State Owls':'Kennesaw State',
+  'Wright State Raiders':'Wright State','Pennsylvania Quakers':'Penn',
+  'UCF Knights':'UCF','Furman Paladins':'Furman','Queens Royals':'Queens',
+  'Tennessee State Tigers':'Tennessee State','Idaho Vandals':'Idaho',
+  'Siena Saints':'Siena','LIU Sharks':'LIU','UMBC Retrievers':'UMBC',
+  'Howard Bison':'Howard','Lehigh Mountain Hawks':'Lehigh',
+  'Prairie View A&M Panthers':'Prairie View A&M','Miami (OH) RedHawks':'Miami OH',
+  'Troy Trojans':'Troy','Hofstra Pride':'Hofstra','Hawaii Warriors':'Hawaii',
+};
+
+function dkToGame(dkName) {
+  if(DK[dkName]) return DK[dkName];
+  const low = dkName.toLowerCase();
+  for(const g of GAMES) {
+    if(low.includes(g.t1.bt.toLowerCase().split(' ')[0]) || low.includes(g.t2.bt.toLowerCase().split(' ')[0])) {
+      if(low.includes(g.t1.bt.toLowerCase().split(' ')[0])) return g.t1.bt;
+      return g.t2.bt;
+    }
+  }
+  return dkName;
+}
+
+// ── INIT STATE ───────────────────────────────────────────────────────
+// Pre-populate vegas from hardcoded defaults if not already saved
+function initScores() {
+  // All 4 First Four games are complete
+  // f1: UMBC(t1) vs Howard(t2) — Howard won 86-83
+  if(!STATE.scores['f1']) STATE.scores['f1'] = {t1:83, t2:86, final:true};
+  // f2: Prairie View(t1) vs Lehigh(t2) — Prairie View won
+  if(!STATE.scores['f2']) STATE.scores['f2'] = {t1:67, t2:55, final:true}; // Prairie View 67, Lehigh 55
+  // f3: Texas(t1) vs NC State(t2) — Texas won 68-66
+  if(!STATE.scores['f3']) STATE.scores['f3'] = {t1:68, t2:66, final:true};
+  // f4: Miami OH(t1) vs SMU(t2) — Miami OH won
+  if(!STATE.scores['f4']) STATE.scores['f4'] = {t1:89, t2:79, final:true}; // Miami OH 89, SMU 79
+  // Lock all First Four lines
+  ['f1','f2','f3','f4'].forEach(id => {
+    if(STATE.vegas[id]) STATE.vegas[id].locked = true;
+  });
+}
+
+function initVegas() {
+  GAMES.forEach(g => {
+    if(!STATE.vegas[g.id]) {
+      STATE.vegas[g.id] = {spread:g.spread, total:g.total, ml:'', locked:false, userEdited:false};
+    }
+  });
+}
+
+// ── MONTE CARLO ───────────────────────────────────────────────────────
+async function simGame(g) {
+  const em1=pr(g.t1.bt), em2=pr(g.t2.bt);
+  const t1=tp(g.t1.bt), t2=tp(g.t2.bt);
+  const avg=(t1+t2)/2, diff=(em1-em2)*(avg/100), base=71*(avg/68);
+  const t1e=base+diff/2, t2e=base-diff/2, sd=10.5, CHUNK=1000;
+  let w1=0, sumMg=0, sumTot=0;
+  const margins=new Float32Array(SIMS);
+  for(let s=0;s<SIMS;s+=CHUNK){
+    const end=Math.min(s+CHUNK,SIMS);
+    for(let i=s;i<end;i++){
+      const u1=Math.random()||1e-10,u2=Math.random(),u3=Math.random()||1e-10,u4=Math.random();
+      const z1=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+      const z2=Math.sqrt(-2*Math.log(u3))*Math.cos(2*Math.PI*u4);
+      const s1=Math.max(40,t1e+z1*sd),s2=Math.max(40,t2e+z2*sd);
+      margins[i]=s1-s2; sumMg+=s1-s2; sumTot+=s1+s2;
+      if(s1>s2) w1++;
+    }
+    await sleep(4);
+  }
+  margins.sort();
+  const ms=parseFloat((-(sumMg/SIMS)).toFixed(1));
+  const mt=parseFloat((sumTot/SIMS).toFixed(1));
+  const v=STATE.vegas[g.id]||{};
+  const vs=parseFloat(v.spread),vt=parseFloat(v.total);
+  return {
+    w1:Math.round(w1/SIMS*100),w2:Math.round((SIMS-w1)/SIMS*100),
+    ms,mt,t1e:parseFloat(t1e.toFixed(1)),t2e:parseFloat(t2e.toFixed(1)),
+    p10:margins[Math.floor(SIMS*.10)].toFixed(1),
+    p90:margins[Math.floor(SIMS*.90)].toFixed(1),
+    sd2:isNaN(vs)?null:parseFloat((vs-ms).toFixed(1)),
+    td:isNaN(vt)?null:parseFloat((mt-vt).toFixed(1)),
+  };
+}
+
+async function runAllSims() {
+  const btn=document.getElementById('runBtn');
+  if(btn) btn.disabled=true;
+  const ov=document.getElementById('mcOv');
+  ov.style.display='flex';
+  const toSim=GAMES.filter(g=>!STATE.sims[g.id]); // sim all games, including completed
+  for(let i=0;i<toSim.length;i++){
+    const g=toSim[i];
+    document.getElementById('mcG').textContent='GAME '+(i+1)+'/'+toSim.length+' — '+g.t1.name.toUpperCase()+' vs '+g.t2.name.toUpperCase();
+    document.getElementById('mcN').textContent=(i*SIMS).toLocaleString();
+    document.getElementById('mcB').style.width=Math.round(i/toSim.length*100)+'%';
+    await sleep(10);
+    STATE.sims[g.id]=await simGame(g);
+    recalcDiff(g);
+  }
+  document.getElementById('mcN').textContent=(toSim.length*SIMS).toLocaleString();
+  document.getElementById('mcB').style.width='100%';
+  save(); await sleep(400);
+  ov.style.display='none';
+  if(btn) btn.disabled=false;
+  render(); renderSum();
+  document.getElementById('sum').style.display='grid';
+  document.getElementById('leg').style.display='flex';
+}
+
+function recalcDiff(g){
+  const r=STATE.sims[g.id]; if(!r) return;
+  const v=STATE.vegas[g.id]||{};
+  const vs=parseFloat(v.spread),vt=parseFloat(v.total);
+  r.sd2=isNaN(vs)?null:parseFloat((vs-r.ms).toFixed(1));
+  r.td=isNaN(vt)?null:parseFloat((r.mt-vt).toFixed(1));
+}
+
+// ── ODDS API ─────────────────────────────────────────────────────────
+async function fetchOdds(){
+  // Rate limit — only fetch if 4+ hours since last call
+  const lastFetch = parseInt(localStorage.getItem('lastOddsFetch')||'0');
+  const hoursSince = (Date.now() - lastFetch) / 3600000;
+  if(hoursSince < 4) {
+    setSt2('ok', 'Lines current · next update in ' + Math.round(4-hoursSince) + 'h');
+    return;
+  }
+  localStorage.setItem('lastOddsFetch', Date.now().toString());
+  const url=`https://api.the-odds-api.com/v4/sports/basketball_ncaab/odds?regions=us&markets=spreads,totals&oddsFormat=american&bookmakers=draftkings&apiKey=${ODDS_KEY}`;
+  const proxies=[url,`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
+  let dkGames=null;
+  for(const p of proxies){
+    try{
+      const r=await fetch(p); if(!r.ok) continue;
+      const d=await r.json();
+      if(Array.isArray(d)){dkGames=d;break;}
+      if(d?.contents){try{dkGames=JSON.parse(d.contents);break;}catch(e){}}
+    }catch(e){continue;}
+  }
+  if(!dkGames){setSt2('ok','Lines: saved · '+new Date().toLocaleTimeString());return;}
+
+  let updated=0;
+  dkGames.forEach(dk=>{
+    const dkAway=dk.away_team, dkHome=dk.home_team;
+    const ourAway=dkToGame(dkAway), ourHome=dkToGame(dkHome);
+    // Find matching game
+    let match=null, flipped=false;
+    for(const g of GAMES){
+      if(STATE.vegas[g.id]?.locked||STATE.vegas[g.id]?.userEdited) continue;
+      if(g.t1.bt===ourAway&&g.t2.bt===ourHome){match=g;flipped=false;break;}
+      if(g.t1.bt===ourHome&&g.t2.bt===ourAway){match=g;flipped=true;break;}
+      // fuzzy
+      if(g.t1.bt.split(' ')[0]===ourAway.split(' ')[0]&&g.t2.bt.split(' ')[0]===ourHome.split(' ')[0]){match=g;flipped=false;break;}
+      if(g.t1.bt.split(' ')[0]===ourHome.split(' ')[0]&&g.t2.bt.split(' ')[0]===ourAway.split(' ')[0]){match=g;flipped=true;break;}
+    }
+    if(!match) return;
+    const bm=dk.bookmakers?.[0]; if(!bm) return;
+    bm.markets?.forEach(mkt=>{
+      if(mkt.key==='spreads'){
+        const ao=mkt.outcomes?.find(o=>o.name===dkAway);
+        if(ao){STATE.vegas[match.id].spread=flipped?-ao.point:ao.point;updated++;}
+      }
+      if(mkt.key==='totals'){
+        const o=mkt.outcomes?.find(o=>o.name==='Over');
+        if(o) STATE.vegas[match.id].total=o.point;
+      }
+    });
+    recalcDiff(match);
+  });
+  if(updated>0){save();render();renderSum();}
+  setSt2('ok',updated+' lines from DraftKings · '+new Date().toLocaleTimeString());
+}
+
+// ── ESPN SCORES ───────────────────────────────────────────────────────
+async function fetchScores(){
+  setSt2('loading','Fetching scores...');
+  const dates=['20260317','20260318','20260319','20260320','20260321','20260322',
+               '20260326','20260327','20260328','20260329','20260403','20260404','20260406'];
+  const now=new Date();
+  let updated=0;
+
+  for(const d of dates){
+    const dt=new Date(d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8)+'T20:00:00Z');
+    if(dt>new Date(now.getTime()+86400000)) continue;
+    const url=`https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&dates=${d}&limit=50`;
+    const proxies=[url,`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
+    let data=null;
+    for(const p of proxies){
+      try{const r=await fetch(p);if(!r.ok)continue;const j=await r.json();if(j?.events){data=j;break;}}catch(e){continue;}
+    }
+    if(!data) continue;
+
+    for(const ev of (data.events||[])){
+      const comp=ev.competitions?.[0]; if(!comp) continue;
+      const notes=(comp.notes||[]).map(n=>(n.headline||'').toLowerCase()).join(' ');
+      if(!notes.includes("men's basketball championship")) continue;
+      if(!comp.status?.type?.completed) continue;
+      const away=comp.competitors.find(c=>c.homeAway==='away')||comp.competitors[0];
+      const home=comp.competitors.find(c=>c.homeAway==='home')||comp.competitors[1];
+      const awayName=(away.team?.displayName||'').toLowerCase();
+      const homeName=(home.team?.displayName||'').toLowerCase();
+      // Match to our game by team names
+      const match=GAMES.find(g=>{
+        if(STATE.scores[g.id]?.final) return false; // already have score
+        const a=g.t1.name.toLowerCase(),b=g.t2.name.toLowerCase();
+        const bt1=g.t1.bt.toLowerCase(),bt2=g.t2.bt.toLowerCase();
+        // Check all name variants for both teams
+        const awayWords = awayName.split(/\s+/);
+        const homeWords = homeName.split(/\s+/);
+        const t1Words = (a+' '+bt1).split(/\s+/).filter(w=>w.length>2);
+        const t2Words = (b+' '+bt2).split(/\s+/).filter(w=>w.length>2);
+        const t1Match = t1Words.some(w=>awayWords.some(aw=>aw.startsWith(w.slice(0,4))||w.startsWith(aw.slice(0,4))));
+        const t2Match = t2Words.some(w=>homeWords.some(hw=>hw.startsWith(w.slice(0,4))||w.startsWith(hw.slice(0,4))));
+        return t1Match && t2Match;
+      });
+      if(match&&!STATE.scores[match.id]?.final){
+        STATE.scores[match.id]={t1:parseInt(away.score||0),t2:parseInt(home.score||0),final:true};
+        if(STATE.vegas[match.id]) STATE.vegas[match.id].locked=true;
+        updated++;
+      }
+      // Also lock lines for live games even if not yet final
+      if(match && comp.status?.type?.state==='in') {
+        if(STATE.vegas[match.id]) STATE.vegas[match.id].locked=true;
+      }
+    }
+  }
+  if(updated>0){save();render();renderSum();}
+  setSt2('ok',updated>0?updated+' scores updated · '+new Date().toLocaleTimeString():'Scores current · '+new Date().toLocaleTimeString());
+}
+
+// ── POLLING ───────────────────────────────────────────────────────────
+let pollTimer=null;
+function startPolling(){
+  fetchScores();
+  fetchOdds();
+  if(pollTimer) clearInterval(pollTimer);
+  let oc=0;
+  pollTimer=setInterval(()=>{
+    fetchScores();
+    oc++;
+    if(oc>=120){fetchOdds();oc=0;} // every 4 hours (120 x 2min)
+  },120000);
+}
+
+// ── FILTERS ──────────────────────────────────────────────────────────
+let FILT='ALL';
+function buildFilters(){
+  const tabs=['ALL','FIRST FOUR','EAST','WEST','MIDWEST','SOUTH','🔥 BIG EDGE','📊 RESULTS'];
+  const el=document.getElementById('filters'); if(!el) return;
+  el.innerHTML=tabs.map(t=>`<button class="ft ${FILT===t?'on':''}" onclick="filt('${t.replace(/'/g,"\\'")}',this)">${t}</button>`).join('');
+}
+
+function filt(f,el){
+  FILT=f;
+  document.querySelectorAll('.ft').forEach(t=>t.classList.remove('on'));
+  if(el) el.classList.add('on');
+  if(f==='📊 RESULTS'){renderResults();return;}
+  render();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────
+function render(){
+  const gc=document.getElementById('gc'); if(!gc) return;
+  let games=GAMES;
+  if(FILT==='FIRST FOUR') games=GAMES.filter(g=>g.round==='First Four');
+  else if(FILT==='EAST') games=GAMES.filter(g=>g.region==='EAST');
+  else if(FILT==='WEST') games=GAMES.filter(g=>g.region==='WEST');
+  else if(FILT==='MIDWEST') games=GAMES.filter(g=>g.region==='MIDWEST');
+  else if(FILT==='SOUTH') games=GAMES.filter(g=>g.region==='SOUTH');
+  else if(FILT==='🔥 BIG EDGE') games=GAMES.filter(g=>!STATE.scores[g.id]?.final&&(Math.abs(STATE.sims[g.id]?.sd2||0)>=4||Math.abs(STATE.sims[g.id]?.td||0)>=8));
+  gc.innerHTML='<div class="grid">'+games.map(mkCard).join('')+'</div>';
+}
+
+function mkCard(g){
+  const r=STATE.sims[g.id],v=STATE.vegas[g.id]||{},sc=STATE.scores[g.id];
+  const vs=parseFloat(v.spread),vt=parseFloat(v.total);
+  let ec='el';
+  if(sc?.final) ec='ed';
+  else if(r&&r.sd2!==null){const a=Math.abs(r.sd2);if(a>=4)ec='eb';else if(a>=2)ec='em';}
+
+  const badge=sc?.final?'<span style="background:var(--gn);color:#000;font-family:\'Source Code Pro\',monospace;font-size:8px;padding:2px 6px">FINAL</span>'
+    :'<span style="font-family:\'Source Code Pro\',monospace;font-size:8px;color:var(--mu)">'+g.time+'</span>';
+
+  const vsHtml=sc?.final
+    ?'<div style="text-align:center"><div style="font-family:\'Source Code Pro\',monospace;font-size:8px;color:var(--mu)">FINAL</div><div style="font-family:\'Oswald\',sans-serif;font-weight:700;font-size:16px;color:var(--gn)">'+sc.t1+'-'+sc.t2+'</div></div>'
+    :'<div class="vs">VS</div>';
+
+  const t1won=sc&&sc.t1>sc.t2, t2won=sc&&sc.t2>sc.t1;
+  const modelPickT1=r&&r.w1>r.w2;
+
+  const simHtml=r?(
+    '<div class="wb"><div class="wba" style="width:'+r.w1+'%"></div><div class="wbh"></div></div>'
+    +'<div class="wp"><span style="color:var(--bl)">'+g.t1.name+' '+r.w1+'%</span><span>WIN PROB</span><span style="color:var(--or)">'+g.t2.name+' '+r.w2+'%</span></div>'
+    +'<div class="sims">'
+    +'<div class="sbox"><div class="sv2" style="color:'+(modelPickT1?'var(--or)':'var(--bl)')+'">'+(modelPickT1?g.t1.name:g.t2.name)+'</div><div class="sl2">MODEL PICK</div></div>'
+    +'<div class="sbox"><div class="sv2" style="color:var(--tl)">'+Math.abs(r.ms).toFixed(1)+'</div><div class="sl2">AVG MARGIN</div></div>'
+    +'<div class="sbox"><div class="sv2" style="color:var(--bl)">'+r.mt.toFixed(1)+'</div><div class="sl2">AVG TOTAL</div></div>'
+    +'<div class="sbox"><div class="sv2" style="color:var(--mu);font-size:11px">'+r.p10+' to '+r.p90+'</div><div class="sl2">80% RANGE</div></div>'
+    +'</div>'
+    +'<div class="avg"><span class="avg-l">AVG SCORE:</span><span class="avg-v">'+g.t1.name+' '+r.t1e+' — '+r.t2e+' '+g.t2.name+'</span></div>'
+  ):'<div style="text-align:center;padding:12px;font-family:\'Source Code Pro\',monospace;font-size:10px;color:var(--mu)">Hit ▶ RUN SIMS to generate predictions</div>';
+
+  const vegasStr=!isNaN(vs)?(vs<0?g.t1.name+' '+vs:g.t2.name+' -'+vs):'—';
+  const modelStr=r?(r.ms<0?g.t1.name+' '+r.ms:g.t2.name+' -'+Math.abs(r.ms)):'—';
+
+  const compHtml=r?(
+    '<div class="comp">'
+    +'<div class="crow"><span class="cl">SPREAD</span>'
+    +'<span class="cv">'+vegasStr+'</span>'
+    +'<span class="cm">'+modelStr+'</span>'
+    +'<span class="cd '+(r.sd2!==null&&Math.abs(r.sd2)>=4?'big':r.sd2!==null&&Math.abs(r.sd2)>=2?'mod':'low')+'">'
+    +(r.sd2===null?'—':Math.abs(r.sd2)<0.5?'✓ AGREE':'Model likes '+(r.sd2>0?g.t1.name:g.t2.name)+' by '+Math.abs(r.sd2).toFixed(1)+' more')
+    +'</span></div>'
+    +'<div class="crow"><span class="cl">TOTAL</span>'
+    +'<span class="cv">'+(!isNaN(vt)?vt:'—')+'</span>'
+    +'<span class="cm">'+r.mt.toFixed(1)+'</span>'
+    +'<span class="cd '+(r.td!==null&&Math.abs(r.td)>=4?'big':r.td!==null&&Math.abs(r.td)>=2?'mod':'low')+'">'
+    +(r.td===null?'—':Math.abs(r.td)<0.5?'✓ AGREE':r.td>0?'Model OVER by '+Math.abs(r.td).toFixed(1):'Model UNDER by '+Math.abs(r.td).toFixed(1))
+    +'</span></div></div>'
+  ):'';
+
+  const gradeHtml=(sc?.final&&r)?buildGrade(g,sc,r,v):'';
+
+  const inputs='<div class="inputs">'
+    +'<div><label class="ilbl">SPREAD (neg='+g.t1.name+' fav)</label>'
+    +'<input class="ifield" value="'+(!isNaN(vs)?vs:'')+'" placeholder="-5.5" data-id="'+g.id+'" data-f="spread" oninput="updV(this.dataset.id,this.dataset.f,this.value)"></div>'
+    +'<div><label class="ilbl">TOTAL</label>'
+    +'<input class="ifield" value="'+(!isNaN(vt)?vt:'')+'" placeholder="143.5" data-id="'+g.id+'" data-f="total" oninput="updV(this.dataset.id,this.dataset.f,this.value)"></div>'
+    +'<div><label class="ilbl">ML (optional)</label>'
+    +'<input class="ifield" value="'+(v.ml||'')+'" placeholder="-350" data-id="'+g.id+'" data-f="ml" oninput="updV(this.dataset.id,this.dataset.f,this.value)"></div>'
+    +'</div>';
+
+  return '<div class="card '+ec+'" id="card-'+g.id+'">'
+    +'<div class="ch"><span class="cr">'+g.region+' · '+g.venue+' · '+g.date+'</span>'+badge+'</div>'
+    +'<div class="cb">'
+    +'<div class="teams">'
+    +'<div class="team"><div class="ts2">#'+g.t1.seed+' SEED</div>'
+    +'<div class="tn '+(t1won?'w':t2won?'l':modelPickT1&&!sc?'w':'')+'" >'+g.t1.name+'</div></div>'
+    +vsHtml
+    +'<div class="team"><div class="ts2">#'+g.t2.seed+' SEED</div>'
+    +'<div class="tn '+(t2won?'w':t1won?'l':!modelPickT1&&r&&!sc?'w':'')+'" >'+g.t2.name+'</div></div>'
+    +'</div>'
+    +simHtml+compHtml+gradeHtml+inputs
+    +'</div></div>';
+}
+
+function buildGrade(g,sc,r,v){
+  const am=sc.t1-sc.t2,at=sc.t1+sc.t2;
+  const vs=parseFloat((v||{}).spread);
+  const me=Math.abs(-r.ms-am).toFixed(1);
+  const ve=!isNaN(vs)?Math.abs(-vs-am).toFixed(1):null;
+  const t1won=sc.t1>sc.t2,winner=t1won?g.t1.name:g.t2.name;
+  const mRight=(t1won&&r.w1>r.w2)||(!t1won&&r.w2>r.w1);
+  let h='<div style="background:var(--s2);border:1px solid var(--br);padding:8px;margin-top:8px">';
+  h+='<div style="font-family:\'Source Code Pro\',monospace;font-size:8px;color:var(--mu);margin-bottom:4px">RESULT</div>';
+  h+='<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">';
+  h+='<span style="font-family:Oswald,sans-serif;font-weight:700;color:var(--gn)">'+winner+' '+sc.t1+'-'+sc.t2+'</span>';
+  h+='<span style="font-family:\'Source Code Pro\',monospace;font-size:9px;color:'+(mRight?'var(--gn)':'var(--rd)')+'">Model '+(mRight?'✓ CORRECT':'✗ WRONG')+'</span>';
+  h+='<span style="font-family:\'Source Code Pro\',monospace;font-size:9px;color:var(--mu)">Model err: '+me+' pts</span>';
+  if(ve) h+='<span style="font-family:\'Source Code Pro\',monospace;font-size:9px;color:var(--mu)">Vegas err: '+ve+' pts</span>';
+  h+='</div></div>';
+  return h;
+}
+
+// ── RESULTS ───────────────────────────────────────────────────────────
+function renderResults(){
+  const gc=document.getElementById('gc'); if(!gc) return;
+  const graded=GAMES.filter(g=>STATE.scores[g.id]?.final&&STATE.sims[g.id]);
+  if(!graded.length){
+    gc.innerHTML='<div class="empty"><div class="ei">⏳</div><div class="et">No results yet</div><div class="es">Scores auto-load from ESPN after games finish</div></div>';
+    return;
+  }
+  let mErr=[],vErr=[],mTErr=[],vTErr=[],mOk=0,vOk=0;
+  graded.forEach(g=>{
+    const sc=STATE.scores[g.id],r=STATE.sims[g.id],v=STATE.vegas[g.id]||{};
+    const am=sc.t1-sc.t2,at=sc.t1+sc.t2;
+    mErr.push(Math.abs(-r.ms-am));
+    mTErr.push(Math.abs(r.mt-at));
+    const vs=parseFloat(v.spread),vt=parseFloat(v.total);
+    if(!isNaN(vs)){vErr.push(Math.abs(-vs-am));if((sc.t1>sc.t2&&vs<0)||(sc.t2>sc.t1&&vs>0))vOk++;}
+    if(!isNaN(vt)) vTErr.push(Math.abs(vt-at));
+    if((sc.t1>sc.t2&&r.w1>r.w2)||(sc.t2>sc.t1&&r.w2>r.w1)) mOk++;
+  });
+  const avg=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1):'—';
+  const mA=avg(mErr),vA=avg(vErr),mB=parseFloat(mA)<parseFloat(vA);
+  const stat=(v,l,c)=>'<div class="sstat" style="border-top-color:'+(c||'var(--or)')+'"><div class="sstat-v" style="color:'+(c||'var(--or)')+'">'+v+'</div><div class="sstat-l">'+l+'</div></div>';
+  let html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:16px">';
+  html+=stat(graded.length,'GRADED','var(--or)');
+  html+=stat(mOk+'/'+graded.length,'MODEL PICKS','var(--bl)');
+  html+=stat(vOk+'/'+vErr.length,'VEGAS PICKS','var(--gd)');
+  html+=stat(mA+' pts','MODEL ERR','var(--tl)');
+  html+=stat(vA+' pts','VEGAS ERR','var(--gd)');
+  html+=stat(avg(mTErr)+' pts','MDL TOT ERR','var(--tl)');
+  html+=stat(avg(vTErr)+' pts','VGS TOT ERR','var(--gd)');
+  if(vErr.length) html+=stat(mB?'MODEL ✓':'VEGAS ✓','MORE ACCURATE',mB?'var(--gn)':'var(--rd)');
+  html+='</div>';
+  const ec=n=>parseFloat(n)<=3?'var(--gn)':parseFloat(n)<=6?'var(--gd)':'var(--rd)';
+  const th=(t,c,left)=>'<th class="rth" style="'+(left?'text-align:left;':'')+'color:'+(c||'var(--mu)')+'">'+t+'</th>';
+  html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">';
+  html+='<thead><tr style="background:var(--s2);border-bottom:2px solid var(--or)">';
+  html+=th('ROUND','',true)+th('MATCHUP','',true)+th('FINAL','',true);
+  html+=th('MODEL','var(--bl)')+th('VEGAS','var(--gd)');
+  html+=th('MDL LINE','var(--bl)')+th('VGS LINE','var(--gd)');
+  html+=th('MDL ERR','var(--bl)')+th('VGS ERR','var(--gd)');
+  html+=th('TOTAL','var(--tl)')+th('MDL TOT','var(--bl)')+th('VGS TOT','var(--gd)');
+  html+='</tr></thead><tbody>';
+  graded.forEach((g,i)=>{
+    const sc=STATE.scores[g.id],r=STATE.sims[g.id],v=STATE.vegas[g.id]||{};
+    const t1w=sc.t1>sc.t2,winner=t1w?g.t1.name:g.t2.name,margin=Math.abs(sc.t1-sc.t2);
+    const am=sc.t1-sc.t2,at=sc.t1+sc.t2;
+    const mPick=r.w1>r.w2?g.t1.name:g.t2.name,mRight=(t1w&&r.w1>r.w2)||(!t1w&&r.w2>r.w1);
+    const me=Math.abs(-r.ms-am).toFixed(1);
+    const vs=parseFloat(v.spread),vt=parseFloat(v.total);
+    const vPick=!isNaN(vs)?(vs<0?g.t1.name:g.t2.name):'—';
+    const vRight=!isNaN(vs)&&((t1w&&vs<0)||(!t1w&&vs>0));
+    const ve=!isNaN(vs)?Math.abs(-vs-am).toFixed(1):'—';
+    const td=(val,col,c)=>'<td class="rtd"'+(c?' style="text-align:center;color:'+(col||'var(--tx)')+'">':' style="color:'+(col||'var(--tx)')+'">') +val+'</td>';
+    html+='<tr style="background:'+(i%2?'var(--s2)':'var(--s)')+';border-bottom:1px solid var(--br)">';
+    html+=td(g.region,'var(--mu)')+td(g.t1.name+' vs '+g.t2.name)+'<td class="rtd" style="font-weight:700;color:var(--gn)">'+winner+' '+sc.t1+'-'+sc.t2+'</td>';
+    html+=td(mPick+(mRight?' ✓':' ✗'),mRight?'var(--gn)':'var(--rd)',true);
+    html+=td(vPick+(vPick!=='—'?(vRight?' ✓':' ✗'):''),vPick!=='—'?(vRight?'var(--gn)':'var(--rd)'):'var(--mu)',true);
+    html+=td(r.ms<0?g.t1.name+' '+r.ms:g.t2.name+' -'+Math.abs(r.ms),'var(--bl)',true);
+    html+=td(!isNaN(vs)?(vs<0?g.t1.name+' '+vs:g.t2.name+' -'+vs):'—','var(--gd)',true);
+    html+=td(me+' pts',ec(me),true)+td(ve!=='—'?ve+' pts':'—',ve!=='—'?ec(ve):'var(--mu)',true);
+    html+=td(at,'var(--tl)',true)+td(r.mt.toFixed(1),'var(--bl)',true)+td(!isNaN(vt)?vt:'—','var(--gd)',true);
+    html+='</tr>';
+  });
+  html+='</tbody></table></div>';
+  gc.innerHTML=html;
+}
+
+// ── SUMMARY ───────────────────────────────────────────────────────────
+function renderSum(){
+  const el=document.getElementById('sum'); if(!el) return;
+  const graded=GAMES.filter(g=>STATE.scores[g.id]?.final&&STATE.sims[g.id]);
+  const simmed=GAMES.filter(g=>STATE.sims[g.id]&&!STATE.scores[g.id]?.final);
+  const bigE=simmed.filter(g=>Math.abs(STATE.sims[g.id]?.sd2||0)>=4);
+  let ok=0; graded.forEach(g=>{const sc=STATE.scores[g.id],r=STATE.sims[g.id];if((sc.t1>sc.t2&&r.w1>r.w2)||(sc.t2>sc.t1&&r.w2>r.w1))ok++;});
+  el.innerHTML=
+    '<div class="sb"><div class="sv">'+GAMES.length+'</div><div class="sl">GAMES</div></div>'
+    +'<div class="sb"><div class="sv" style="color:var(--gd)">'+(Object.keys(STATE.sims).length*SIMS/1000).toFixed(0)+'K</div><div class="sl">SIMS RUN</div></div>'
+    +'<div class="sb"><div class="sv" style="color:var(--gn)">'+ok+'/'+graded.length+'</div><div class="sl">CORRECT PICKS</div></div>'
+    +'<div class="sb" style="border-top-color:var(--or)"><div class="sv">'+bigE.length+'</div><div class="sl">BIG EDGES</div></div>';
+}
+
+// ── VEGAS INPUT ───────────────────────────────────────────────────────
+function updV(id,field,val){
+  if(!STATE.vegas[id]) STATE.vegas[id]={};
+  STATE.vegas[id][field]=field==='ml'?val:parseFloat(val);
+  STATE.vegas[id].userEdited=true;
+  const g=GAMES.find(x=>x.id===id); if(!g) return;
+  recalcDiff(g);
+  const el=document.getElementById('card-'+id);
+  if(el){const tmp=document.createElement('div');tmp.innerHTML=mkCard(g);el.replaceWith(tmp.firstElementChild);}
+  save(); renderSum();
+}
+
+// ── STATUS ────────────────────────────────────────────────────────────
+function setSt(t,m){const el=document.getElementById('st');if(!el)return;el.className='st '+t;el.textContent=m;}
+function setSt2(t,m){const el=document.getElementById('scoreSt');if(!el)return;el.style.color=t==='ok'?'var(--gn)':t==='loading'?'var(--gd)':'var(--mu)';el.textContent='📡 '+m;}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+load();
+initVegas();
+initScores();
+document.addEventListener('DOMContentLoaded',()=>{
+  buildFilters();
+  render();
+  document.getElementById('sum').style.display='grid';
+  document.getElementById('leg').style.display='flex';
+  renderSum();
+  setSt('ok',GAMES.length+' games loaded · click RUN SIMS');
+  startPolling();
+});
+</script>
+</body>
+</html>
