@@ -347,7 +347,7 @@ const GAMES = [
   {id:'s5',region:'SOUTH',round:'First Round',t1:{seed:6, name:'North Carolina',bt:'North Carolina'},t2:{seed:11,name:'VCU',bt:'VCU'},         spread:-2.5, total:154.5,date:'Mar 19',time:'6:45 PM',venue:'Oklahoma City, OK'},
   {id:'s6',region:'SOUTH',round:'First Round',t1:{seed:3, name:'Illinois',bt:'Illinois'},     t2:{seed:14,name:'Penn',bt:'Penn'},              spread:-24.5,total:150.5,date:'Mar 19',time:'4:30 PM',venue:'Philadelphia, PA'},
   {id:'s7',region:'SOUTH',round:'First Round',t1:{seed:7, name:"Saint Mary's",bt:"Saint Mary's"},t2:{seed:10,name:'Texas A&M',bt:'Texas A&M'},spread:-3.5, total:147.5,date:'Mar 19',time:'3:20 PM',venue:'Oklahoma City, OK'},
-  {id:'s8',region:'SOUTH',round:'First Round',t1:{seed:2, name:'Houston',bt:'Houston'},       t2:{seed:15,name:'Idaho',bt:'Idaho'},            spread:-23.5,total:136.5,date:'Mar 20',time:'10:10 PM',venue:'Oklahoma City, OK'},,
+  {id:'s8',region:'SOUTH',round:'First Round',t1:{seed:2, name:'Houston',bt:'Houston'},       t2:{seed:15,name:'Idaho',bt:'Idaho'},            spread:-23.5,total:136.5,date:'Mar 20',time:'10:10 PM',venue:'Oklahoma City, OK'},
   // ── ROUND OF 32 ─────────────────────────────────────────────────────
   {id:'r2e1',region:'EAST',round:'Second Round',t1:{seed:1, name:'Duke',bt:'Duke'},t2:{seed:9,name:'TCU',bt:'TCU'},spread:-11.5,total:140.5,date:'Mar 21',time:'5:15 PM',venue:'Greenville, SC'},
   {id:'r2e2',region:'EAST',round:'Second Round',t1:{seed:3, name:'Michigan State',bt:'Michigan State'},t2:{seed:6,name:'Louisville',bt:'Louisville'},spread:-3.5,total:145.5,date:'Mar 21',time:'2:45 PM',venue:'Buffalo, NY'},
@@ -516,20 +516,24 @@ function recalcDiff(g){
 
 // ── ODDS API ─────────────────────────────────────────────────────────
 async function fetchOdds(){
-  // Rate limit — 30 min minimum between calls to protect API quota
   const lastFetch = parseInt(localStorage.getItem('lastOddsFetch')||'0');
   const minSince = (Date.now() - lastFetch) / 60000;
   if(minSince < 30) {
-    setSt2('ok', 'Lines current · next update in ' + Math.round(30-minSince) + 'min');
+    setSt2('ok', 'Lines current · next fetch in ' + Math.round(30-minSince) + 'min');
     return;
   }
   localStorage.setItem('lastOddsFetch', Date.now().toString());
+  setSt2('loading', 'Fetching DraftKings lines...');
+  console.log('fetchOdds: starting with key', ODDS_KEY.slice(0,8)+'...');
   const url=`https://api.the-odds-api.com/v4/sports/basketball_ncaab/odds?regions=us&markets=spreads,totals&oddsFormat=american&bookmakers=draftkings&apiKey=${ODDS_KEY}`;
   const proxies=[url,`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
   let dkGames=null;
   for(const p of proxies){
     try{
-      const r=await fetch(p); if(!r.ok) continue;
+      console.log('fetchOdds: trying', p.slice(0,40)+'...');
+      const r=await fetch(p);
+      console.log('fetchOdds: response status', r.status);
+      if(!r.ok) continue;
       const d=await r.json();
       if(Array.isArray(d)){dkGames=d;break;}
       if(d?.contents){try{dkGames=JSON.parse(d.contents);break;}catch(e){}}
