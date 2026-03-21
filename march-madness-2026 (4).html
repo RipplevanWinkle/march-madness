@@ -516,11 +516,11 @@ function recalcDiff(g){
 
 // ── ODDS API ─────────────────────────────────────────────────────────
 async function fetchOdds(){
-  // Rate limit — only fetch if 4+ hours since last call
+  // Rate limit — 30 min minimum between calls to protect API quota
   const lastFetch = parseInt(localStorage.getItem('lastOddsFetch')||'0');
-  const hoursSince = (Date.now() - lastFetch) / 3600000;
-  if(hoursSince < 4) {
-    setSt2('ok', 'Lines current · next update in ' + Math.round(4-hoursSince) + 'h');
+  const minSince = (Date.now() - lastFetch) / 60000;
+  if(minSince < 30) {
+    setSt2('ok', 'Lines current · next update in ' + Math.round(30-minSince) + 'min');
     return;
   }
   localStorage.setItem('lastOddsFetch', Date.now().toString());
