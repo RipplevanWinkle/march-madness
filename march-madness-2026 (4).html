@@ -347,7 +347,24 @@ const GAMES = [
   {id:'s5',region:'SOUTH',round:'First Round',t1:{seed:6, name:'North Carolina',bt:'North Carolina'},t2:{seed:11,name:'VCU',bt:'VCU'},         spread:-2.5, total:154.5,date:'Mar 19',time:'6:45 PM',venue:'Oklahoma City, OK'},
   {id:'s6',region:'SOUTH',round:'First Round',t1:{seed:3, name:'Illinois',bt:'Illinois'},     t2:{seed:14,name:'Penn',bt:'Penn'},              spread:-24.5,total:150.5,date:'Mar 19',time:'4:30 PM',venue:'Philadelphia, PA'},
   {id:'s7',region:'SOUTH',round:'First Round',t1:{seed:7, name:"Saint Mary's",bt:"Saint Mary's"},t2:{seed:10,name:'Texas A&M',bt:'Texas A&M'},spread:-3.5, total:147.5,date:'Mar 19',time:'3:20 PM',venue:'Oklahoma City, OK'},
-  {id:'s8',region:'SOUTH',round:'First Round',t1:{seed:2, name:'Houston',bt:'Houston'},       t2:{seed:15,name:'Idaho',bt:'Idaho'},            spread:-23.5,total:136.5,date:'Mar 20',time:'10:10 PM',venue:'Oklahoma City, OK'},
+  {id:'s8',region:'SOUTH',round:'First Round',t1:{seed:2, name:'Houston',bt:'Houston'},       t2:{seed:15,name:'Idaho',bt:'Idaho'},            spread:-23.5,total:136.5,date:'Mar 20',time:'10:10 PM',venue:'Oklahoma City, OK'},,
+  // ── ROUND OF 32 ─────────────────────────────────────────────────────
+  {id:'r2e1',region:'EAST',round:'Second Round',t1:{seed:1, name:'Duke',bt:'Duke'},t2:{seed:9,name:'TCU',bt:'TCU'},spread:-11.5,total:140.5,date:'Mar 21',time:'5:15 PM',venue:'Greenville, SC'},
+  {id:'r2e2',region:'EAST',round:'Second Round',t1:{seed:3, name:'Michigan State',bt:'Michigan State'},t2:{seed:6,name:'Louisville',bt:'Louisville'},spread:-3.5,total:145.5,date:'Mar 21',time:'2:45 PM',venue:'Buffalo, NY'},
+  {id:'r2e3',region:'EAST',round:'Second Round',t1:{seed:5, name:'St. John\'s',bt:'St. John\'s'},t2:{seed:4,name:'Kansas',bt:'Kansas'},spread:3.5,total:148.5,date:'Mar 22',time:'5:15 PM',venue:'Greenville, SC'},
+  {id:'r2e4',region:'EAST',round:'Second Round',t1:{seed:7, name:'UCLA',bt:'UCLA'},t2:{seed:2,name:'UConn',bt:'UConn'},spread:4.5,total:143.5,date:'Mar 22',time:'8:45 PM',venue:'Philadelphia, PA'},
+  {id:'r2w1',region:'WEST',round:'Second Round',t1:{seed:1, name:'Arizona',bt:'Arizona'},t2:{seed:9,name:'Utah State',bt:'Utah State'},spread:-11.5,total:155.5,date:'Mar 22',time:'7:50 PM',venue:'San Diego, CA'},
+  {id:'r2w2',region:'WEST',round:'Second Round',t1:{seed:4, name:'Arkansas',bt:'Arkansas'},t2:{seed:12,name:'High Point',bt:'High Point'},spread:-7.5,total:160.5,date:'Mar 21',time:'9:45 PM',venue:'Portland, OR'},
+  {id:'r2w3',region:'WEST',round:'Second Round',t1:{seed:3, name:'Gonzaga',bt:'Gonzaga'},t2:{seed:11,name:'Texas',bt:'Texas'},spread:-6.5,total:147.5,date:'Mar 21',time:'7:10 PM',venue:'Portland, OR'},
+  {id:'r2w4',region:'WEST',round:'Second Round',t1:{seed:2, name:'Purdue',bt:'Purdue'},t2:{seed:7,name:'Miami FL',bt:'Miami FL'},spread:-9.5,total:152.5,date:'Mar 22',time:'12:10 PM',venue:'St. Louis, MO'},
+  {id:'r2m1',region:'MIDWEST',round:'Second Round',t1:{seed:1, name:'Michigan',bt:'Michigan'},t2:{seed:9,name:'Saint Louis',bt:'Saint Louis'},spread:-13.5,total:148.5,date:'Mar 21',time:'12:10 PM',venue:'Buffalo, NY'},
+  {id:'r2m2',region:'MIDWEST',round:'Second Round',t1:{seed:5, name:'Texas Tech',bt:'Texas Tech'},t2:{seed:4,name:'Alabama',bt:'Alabama'},spread:-1.5,total:159.5,date:'Mar 22',time:'9:45 PM',venue:'Tampa, FL'},
+  {id:'r2m3',region:'MIDWEST',round:'Second Round',t1:{seed:3, name:'Virginia',bt:'Virginia'},t2:{seed:6,name:'Tennessee',bt:'Tennessee'},spread:1.5,total:137.5,date:'Mar 22',time:'6:10 PM',venue:'St. Louis, MO'},
+  {id:'r2m4',region:'MIDWEST',round:'Second Round',t1:{seed:7, name:'Kentucky',bt:'Kentucky'},t2:{seed:2,name:'Iowa State',bt:'Iowa State'},spread:7.5,total:151.5,date:'Mar 22',time:'2:45 PM',venue:'St. Louis, MO'},
+  {id:'r2s1',region:'SOUTH',round:'Second Round',t1:{seed:1, name:'Florida',bt:'Florida'},t2:{seed:9,name:'Iowa',bt:'Iowa'},spread:-10.5,total:144.5,date:'Mar 22',time:'7:10 PM',venue:'Tampa, FL'},
+  {id:'r2s2',region:'SOUTH',round:'Second Round',t1:{seed:4, name:'Nebraska',bt:'Nebraska'},t2:{seed:5,name:'Vanderbilt',bt:'Vanderbilt'},spread:-1.5,total:138.5,date:'Mar 21',time:'8:45 PM',venue:'Oklahoma City, OK'},
+  {id:'r2s3',region:'SOUTH',round:'Second Round',t1:{seed:3, name:'Illinois',bt:'Illinois'},t2:{seed:11,name:'VCU',bt:'VCU'},spread:-11.5,total:145.5,date:'Mar 21',time:'7:50 PM',venue:'Greenville, SC'},
+  {id:'r2s4',region:'SOUTH',round:'Second Round',t1:{seed:2, name:'Houston',bt:'Houston'},t2:{seed:10,name:'Texas A&M',bt:'Texas A&M'},spread:-10.5,total:142.5,date:'Mar 21',time:'6:10 PM',venue:'Oklahoma City, OK'}
 ];
 
 // ESPN game IDs for completed/live games — maps our game id to ESPN event id
@@ -626,7 +643,10 @@ function startPolling(){
 // ── FILTERS ──────────────────────────────────────────────────────────
 let FILT='ALL';
 function buildFilters(){
-  const tabs=['ALL','FIRST FOUR','EAST','WEST','MIDWEST','SOUTH','🔥 BIG EDGE','📊 RESULTS'];
+  const hasR2 = GAMES.some(g=>g.round==='Second Round');
+  const tabs=['ALL','FIRST FOUR','EAST','WEST','MIDWEST','SOUTH'];
+  if(hasR2) tabs.push('ROUND OF 32');
+  tabs.push('🔥 BIG EDGE','📊 RESULTS');
   const el=document.getElementById('filters'); if(!el) return;
   el.innerHTML=tabs.map(t=>`<button class="ft ${FILT===t?'on':''}" onclick="filt('${t.replace(/'/g,"\\'")}',this)">${t}</button>`).join('');
 }
@@ -648,6 +668,7 @@ function render(){
   else if(FILT==='WEST') games=GAMES.filter(g=>g.region==='WEST');
   else if(FILT==='MIDWEST') games=GAMES.filter(g=>g.region==='MIDWEST');
   else if(FILT==='SOUTH') games=GAMES.filter(g=>g.region==='SOUTH');
+  else if(FILT==='ROUND OF 32') games=GAMES.filter(g=>g.round==='Second Round');
   else if(FILT==='🔥 BIG EDGE') games=GAMES.filter(g=>!STATE.scores[g.id]?.final&&(Math.abs(STATE.sims[g.id]?.sd2||0)>=4||Math.abs(STATE.sims[g.id]?.td||0)>=8));
   gc.innerHTML='<div class="grid">'+games.map(mkCard).join('')+'</div>';
 }
