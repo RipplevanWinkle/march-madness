@@ -634,8 +634,8 @@ async function fetchScores(){
 // ── POLLING ───────────────────────────────────────────────────────────
 let pollTimer=null;
 function startPolling(){
-  fetchScores();
-  fetchOdds();
+  try{ fetchScores(); }catch(e){ console.error('fetchScores error:', e); }
+  try{ fetchOdds(); }catch(e){ console.error('fetchOdds error:', e); }
   if(pollTimer) clearInterval(pollTimer);
   let oc=0;
   pollTimer=setInterval(()=>{
