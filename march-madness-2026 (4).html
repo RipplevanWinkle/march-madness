@@ -149,7 +149,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="empty"><div class="ei">🏀</div><div class="et">2026 NCAA Tournament</div><div class="es">ALL 32 FIRST ROUND GAMES + VEGAS LINES LOADED · CLICK RUN SIMS</div></div>
 </div></div>
 <script>const SIMS = 10000;
-const ODDS_KEY = '9fe39e82cd86f09054575edb94a1579a';
+const ODDS_KEY = 'e008827eabe78bcaec3ceed331540430';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // ── SAVE/LOAD ────────────────────────────────────────────────────────
@@ -599,9 +599,10 @@ async function fetchScores(){
       const homeName=(home.team?.displayName||'').toLowerCase();
       // Match to our game by team names
       const match=GAMES.find(g=>{
+        if(!g.t1?.name||!g.t2?.name) return false;
         if(STATE.scores[g.id]?.final) return false; // already have score
         const a=g.t1.name.toLowerCase(),b=g.t2.name.toLowerCase();
-        const bt1=g.t1.bt.toLowerCase(),bt2=g.t2.bt.toLowerCase();
+        const bt1=(g.t1.bt||g.t1.name).toLowerCase(),bt2=(g.t2.bt||g.t2.name).toLowerCase();
         // Check all name variants for both teams
         const awayWords = awayName.split(/\s+/);
         const homeWords = homeName.split(/\s+/);
@@ -611,7 +612,7 @@ async function fetchScores(){
         const t2Match = t2Words.some(w=>homeWords.some(hw=>hw.startsWith(w.slice(0,4))||w.startsWith(hw.slice(0,4))));
         return t1Match && t2Match;
       });
-      if(match&&!STATE.scores[match.id]?.final){
+      if(match&&match.id&&!STATE.scores[match.id]?.final){
         STATE.scores[match.id]={t1:parseInt(away.score||0),t2:parseInt(home.score||0),final:true};
         if(STATE.vegas[match.id]) STATE.vegas[match.id].locked=true;
         updated++;
